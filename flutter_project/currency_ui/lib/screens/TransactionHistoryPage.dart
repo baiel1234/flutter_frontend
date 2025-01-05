@@ -12,13 +12,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   List<Map<String, dynamic>> _currencies = [];
   bool _isLoading = true;
 
+  String? _selectedCurrency;
+  String? _selectedType;
+
   @override
   void initState() {
     super.initState();
     _fetchData();
   }
 
-  // Получение транзакций и валют
   Future<void> _fetchData() async {
     try {
       final transactions = await _fetchTransactions();
@@ -36,11 +38,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  // Получение списка транзакций
   Future<List<Map<String, dynamic>>> _fetchTransactions() async {
-    final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/api/transactions/'),
-    );
+    final queryParameters = {
+      if (_selectedCurrency != null) 'currency': _selectedCurrency,
+      if (_selectedType != null) 'type': _selectedType,
+    };
+
+    final uri = Uri.http('127.0.0.1:8000', '/api/transactions/filter/', queryParameters);
+
+    final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
@@ -49,11 +55,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  // Получение списка валют
   Future<List<Map<String, dynamic>>> _fetchCurrencies() async {
-    final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/api/currencies/'),
-    );
+    final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/currencies/'));
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
@@ -61,7 +64,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       throw Exception("Failed to fetch currencies.");
     }
   }
-
+  
   // Получение названия валюты по её ID
   String _getCurrencyName(int currencyId) {
     final currency = _currencies.firstWhere(
@@ -154,54 +157,104 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Transaction History")),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _transactions.length,
-              itemBuilder: (context, index) {
-                final transaction = _transactions[index];
-                return Card(
-                  child: ListTile(
-                    title: Text("Type: ${transaction['type']}"),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Currency: ${_getCurrencyName(transaction['currency'])}"),
-                        Text("Quantity: ${transaction['quantity']}"),
-                        Text("Rate: ${transaction['rate']}"),
-                        Text("Total: ${transaction['total']}"),
-                        Text("Timestamp: ${_formatTimestamp(transaction['timestamp'])}"),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () async {
-                            final updatedData = await _showEditDialog(transaction);
-                            if (updatedData != null) {
-                              await _updateTransaction(transaction['id'], updatedData);
-                            }
-                          },
+      body: Column(
+        children: [
+          // Фильтры
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              DropdownButton<String?>(
+                value: _selectedCurrency,
+                hint: Text("Select Currency"),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCurrency = newValue;
+                    _fetchData();
+                  });
+                },
+                items: [
+                  DropdownMenuItem(value: null, child: Text("All")),
+                  ..._currencies
+                      .where((currency) => currency['name'].toLowerCase() != 'som')
+                      .map((currency) {
+                    return DropdownMenuItem(
+                      value: currency['id'].toString(),
+                      child: Text(currency['name']),
+                    );
+                  }).toList(),
+                ],
+              ),
+
+              DropdownButton<String?>(
+                value: _selectedType,
+                hint: Text("Select Type"),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedType = newValue;
+                    _fetchData();
+                  });
+                },
+                items: [
+                  DropdownMenuItem(value: null, child: Text("All")),
+                  DropdownMenuItem(value: "buy", child: Text("Buy")),
+                  DropdownMenuItem(value: "sell", child: Text("Sell")),
+                ],
+              ),
+            ],
+          ),
+          // Список транзакций
+          Expanded(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = _transactions[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text("Type: ${transaction['type']}"),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Currency: ${_getCurrencyName(transaction['currency'])}"),
+                              Text("Quantity: ${transaction['quantity']}"),
+                              Text("Rate: ${transaction['rate']}"),
+                              Text("Total: ${transaction['total']}"),
+                              Text("Timestamp: ${_formatTimestamp(transaction['timestamp'])}"),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () async {
+                                  final updatedData = await _showEditDialog(transaction);
+                                  if (updatedData != null) {
+                                    await _updateTransaction(transaction['id'], updatedData);
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteTransaction(transaction['id']),
+                              ),
+                            ],
+                          ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteTransaction(transaction['id']),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showDeleteAllConfirmation,
-        child: Icon(Icons.delete_forever),
-        tooltip: "Delete All Transactions",
+          ),
+        ],
       ),
-    );
-  }
+    floatingActionButton: FloatingActionButton(
+      onPressed: _showDeleteAllConfirmation,
+      child: Icon(Icons.delete_forever),
+      tooltip: "Delete All Transactions",
+    ),
+  );
+}
 
   // Форматирование timestamp в удобный формат
   String _formatTimestamp(String timestamp) {
