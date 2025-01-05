@@ -97,25 +97,23 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  // Функция для обновления транзакции
-  Future<void> _updateTransaction(int id, Map<String, dynamic> updatedData) async {
+  // Удаление всех транзакций
+  Future<void> _deleteAllTransactions() async {
     try {
-      final response = await http.patch(
-        Uri.parse('http://127.0.0.1:8000/api/transactions/$id/'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(updatedData),
+      final response = await http.delete(
+        Uri.parse('http://127.0.0.1:8000/api/transactions/delete-all/'),
       );
 
-      if (response.statusCode == 200) {
-        _fetchData();
+      if (response.statusCode == 204) {
+        setState(() {
+          _transactions.clear();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Transaction updated successfully.")),
+          SnackBar(content: Text("All transactions deleted successfully.")),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update transaction.")),
+          SnackBar(content: Text("Failed to delete all transactions.")),
         );
       }
     } catch (error) {
@@ -125,64 +123,96 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(title: Text("Transaction History")),
-    body: _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : ListView.builder(
-            itemCount: _transactions.length,
-            itemBuilder: (context, index) {
-              final transaction = _transactions[index];
-              return Card(
-                child: ListTile(
-                  title: Text("Type: ${transaction['type']}"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Currency: ${_getCurrencyName(transaction['currency'])}"),
-                      Text("Quantity: ${transaction['quantity']}"),
-                      Text("Rate: ${transaction['rate']}"),
-                      Text("Total: ${transaction['total']}"),
-                      Text("Timestamp: ${_formatTimestamp(transaction['timestamp'])}"),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () async {
-                          final updatedData = await _showEditDialog(transaction);
-                          if (updatedData != null) {
-                            await _updateTransaction(transaction['id'], updatedData);
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteTransaction(transaction['id']),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-  );
-}
+  // Диалоговое окно для подтверждения удаления всех транзакций
+  Future<void> _showDeleteAllConfirmation() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirm Deletion"),
+          content: Text("Are you sure you want to delete all transactions? This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text("Delete All"),
+            ),
+          ],
+        );
+      },
+    );
 
-// Форматирование timestamp в удобный формат
-String _formatTimestamp(String timestamp) {
-  try {
-    final dateTime = DateTime.parse(timestamp);
-    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
-           "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
-  } catch (e) {
-    return "Invalid date";
+    if (shouldDelete == true) {
+      _deleteAllTransactions();
+    }
   }
-}
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Transaction History")),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: _transactions.length,
+              itemBuilder: (context, index) {
+                final transaction = _transactions[index];
+                return Card(
+                  child: ListTile(
+                    title: Text("Type: ${transaction['type']}"),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Currency: ${_getCurrencyName(transaction['currency'])}"),
+                        Text("Quantity: ${transaction['quantity']}"),
+                        Text("Rate: ${transaction['rate']}"),
+                        Text("Total: ${transaction['total']}"),
+                        Text("Timestamp: ${_formatTimestamp(transaction['timestamp'])}"),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () async {
+                            final updatedData = await _showEditDialog(transaction);
+                            if (updatedData != null) {
+                              await _updateTransaction(transaction['id'], updatedData);
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteTransaction(transaction['id']),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showDeleteAllConfirmation,
+        child: Icon(Icons.delete_forever),
+        tooltip: "Delete All Transactions",
+      ),
+    );
+  }
+
+  // Форматирование timestamp в удобный формат
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
+             "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "Invalid date";
+    }
+  }
 
   // Диалог для редактирования транзакции
   Future<Map<String, dynamic>?> _showEditDialog(Map<String, dynamic> transaction) {
@@ -233,5 +263,31 @@ String _formatTimestamp(String timestamp) {
         );
       },
     );
+  }
+
+  // Обновление транзакции
+  Future<void> _updateTransaction(int id, Map<String, dynamic> updatedData) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('http://127.0.0.1:8000/api/transactions/$id/'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(updatedData),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Transaction updated successfully.")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update transaction.")),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An error occurred: $error")),
+      );
+    }
   }
 }
