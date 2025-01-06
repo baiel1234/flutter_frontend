@@ -44,7 +44,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       if (_selectedType != null) 'type': _selectedType,
     };
 
-    final uri = Uri.http('127.0.0.1:8000', '/api/transactions/filter/', queryParameters);
+    final uri = Uri.http('baiel123.pythonanywhere.com', '/api/transactions/filter/', queryParameters);
 
     final response = await http.get(uri);
 
@@ -56,7 +56,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchCurrencies() async {
-    final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/currencies/'));
+    final response = await http.get(Uri.parse('https://baiel123.pythonanywhere.com/api/currencies/'));
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
@@ -78,7 +78,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Future<void> _deleteTransaction(int id) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://127.0.0.1:8000/api/transactions/$id/'),
+        Uri.parse('https://baiel123.pythonanywhere.com/api/transactions/$id/'),
       );
 
       if (response.statusCode == 204) {
@@ -104,7 +104,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Future<void> _deleteAllTransactions() async {
     try {
       final response = await http.delete(
-        Uri.parse('http://127.0.0.1:8000/api/transactions/delete-all/'),
+        Uri.parse('https://baiel123.pythonanywhere.com/api/transactions/delete-all/'),
       );
 
       if (response.statusCode == 204) {
@@ -322,7 +322,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Future<void> _updateTransaction(int id, Map<String, dynamic> updatedData) async {
     try {
       final response = await http.patch(
-        Uri.parse('http://127.0.0.1:8000/api/transactions/$id/'),
+        Uri.parse('https://baiel123.pythonanywhere.com/api/transactions/$id/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(updatedData),
       );

@@ -28,7 +28,7 @@ class _TransactionPageState extends State<TransactionPage> {
   // Загрузка списка валют
   Future<void> _fetchCurrencies() async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/currencies/'));
+      final response = await http.get(Uri.parse('https://baiel123.pythonanywhere.com/api/currencies/'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -80,7 +80,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/transactions/'),
+        Uri.parse('https://baiel123.pythonanywhere.com/api/transactions/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(transactionData),
       );
@@ -103,13 +103,23 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Create Transaction")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(
+        "Create Transaction",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+        ),
+      ),
+      backgroundColor: Colors.blueAccent,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
           child: Column(
             children: [
               // Тип транзакции
@@ -124,17 +134,26 @@ class _TransactionPageState extends State<TransactionPage> {
                     _selectedType = value;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Transaction Type'),
+                decoration: InputDecoration(
+                  labelText: 'Transaction Type',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
                 validator: (value) => value == null ? 'Please select a type' : null,
               ),
+
+              SizedBox(height: 16),
 
               // Выбор валюты
               DropdownButtonFormField<int>(
                 value: _selectedCurrencyId,
                 items: _currencies
                     .map<DropdownMenuItem<int>>((currency) => DropdownMenuItem<int>(
-                          value: currency['id'] as int, // Явное указание типа
-                          child: Text(currency['name'] as String), // Явное указание типа
+                          value: currency['id'] as int,
+                          child: Text(currency['name'] as String),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -142,23 +161,48 @@ class _TransactionPageState extends State<TransactionPage> {
                     _selectedCurrencyId = value;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Currency'),
+                decoration: InputDecoration(
+                  labelText: 'Currency',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
                 validator: (value) => value == null ? 'Please select a currency' : null,
               ),
+
+              SizedBox(height: 16),
 
               // Поле для ввода количества
               TextFormField(
                 controller: _quantityController,
-                decoration: InputDecoration(labelText: 'Quantity'),
+                decoration: InputDecoration(
+                  labelText: 'Quantity',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) => value == null || value.isEmpty ? 'Please enter quantity' : null,
                 onChanged: (value) => _calculateTotal(),
               ),
 
+              SizedBox(height: 16),
+
               // Поле для ввода курса
               TextFormField(
                 controller: _rateController,
-                decoration: InputDecoration(labelText: 'Rate'),
+                decoration: InputDecoration(
+                  labelText: 'Rate',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) => value == null || value.isEmpty ? 'Please enter rate' : null,
                 onChanged: (value) => _calculateTotal(),
@@ -170,20 +214,34 @@ class _TransactionPageState extends State<TransactionPage> {
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Text(
                     'Total: $_total',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
                 ),
 
               // Кнопка отправки данных
               _isLoading
-                  ? CircularProgressIndicator()
+                  ? CircularProgressIndicator(
+                      color: Colors.blueAccent,
+                    )
                   : ElevatedButton(
                       onPressed: _submitTransaction,
                       child: Text('Submit Transaction'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
 
               SizedBox(height: 20),
 
+              // Кнопка перехода к истории транзакций
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -193,13 +251,24 @@ class _TransactionPageState extends State<TransactionPage> {
                     ),
                   );
                 },
-                child: Text("View Transaction History"),
+                child: Text(
+                  "View Transaction History",
+                  style: TextStyle(fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  textStyle: TextStyle(fontSize: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

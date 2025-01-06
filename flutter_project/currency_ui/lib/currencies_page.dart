@@ -21,7 +21,7 @@ class _CurrenciesPageState extends State<CurrenciesPage> {
   Future<void> _fetchCurrencies() async {
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/currencies/'),
+        Uri.parse('https://baiel123.pythonanywhere.com/api/currencies/'),
       );
 
       if (response.statusCode == 200) {
@@ -45,18 +45,64 @@ class _CurrenciesPageState extends State<CurrenciesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Currencies"),
+        title: Text(
+          "Currencies",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        backgroundColor: Colors.blueAccent,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.blueAccent,
+              ),
+            )
           : ListView.builder(
+              padding: EdgeInsets.all(16),
               itemCount: _currencies.length,
               itemBuilder: (context, index) {
                 final currency = _currencies[index];
                 return Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 5,
+                  margin: EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    title: Text(currency['name']),
-                    subtitle: Text("Quantity: ${currency['quantity']}"),
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blueAccent,
+                      child: Text(
+                        currency['name'][0].toUpperCase(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      currency['name'],
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Quantity: ${currency['quantity']}",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: Colors.blueAccent,
+                    ),
+                    onTap: () {
+                      // Add desired action when tapping on the currency item
+                    },
                   ),
                 );
               },

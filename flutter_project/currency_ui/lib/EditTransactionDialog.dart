@@ -29,40 +29,84 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Edit Transaction"),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      title: Text(
+        "Edit Transaction",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          color: Colors.blueAccent,
+        ),
+      ),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField(
-              value: _type,
-              items: [
-                DropdownMenuItem(child: Text("Buy"), value: "buy"),
-                DropdownMenuItem(child: Text("Sell"), value: "sell"),
-              ],
-              onChanged: (value) => setState(() => _type = value!),
-              decoration: InputDecoration(labelText: "Type"),
-            ),
-            TextFormField(
-              initialValue: _quantity,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Quantity"),
-              onChanged: (value) => _quantity = value,
-            ),
-            TextFormField(
-              initialValue: _rate,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Rate"),
-              onChanged: (value) => _rate = value,
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: _type,
+                items: [
+                  DropdownMenuItem(
+                    child: Text("Buy"),
+                    value: "buy",
+                  ),
+                  DropdownMenuItem(
+                    child: Text("Sell"),
+                    value: "sell",
+                  ),
+                ],
+                onChanged: (value) => setState(() => _type = value!),
+                decoration: InputDecoration(
+                  labelText: "Type",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                initialValue: _quantity,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Quantity",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onChanged: (value) => _quantity = value,
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                initialValue: _rate,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Rate",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onChanged: (value) => _rate = value,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text("Cancel"),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.redAccent,
+          ),
+          child: Text(
+            "Cancel",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -75,7 +119,13 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
               Navigator.pop(context);
             }
           },
-          child: Text("Save"),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.blueAccent,
+          ),
+          child: Text(
+            "Save",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
